@@ -4,7 +4,7 @@ BRL2BRF: Convert between raw Braille file formats
 
 This script was written by Seeing Hands (seeinghands.org).
 
-Copyright (c) 2022-2023 Seeing Hands
+Copyright (c) 2022-2024 Seeing Hands
 Licensed under the MIT license. See the "license" file for details.
 """
 
@@ -13,7 +13,7 @@ import os
 import sys
 import re
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 format_choices = ["brf", "brl"]
 
@@ -36,7 +36,6 @@ def convert_string_brl_to_brf(brl):
         .replace(b"`", b"@")
         .replace(b"~", b"^")
         .replace(b"|", b"\\")
-        .replace(b"\r\n", b"\n")
     )
 
     return brf
@@ -57,7 +56,6 @@ def convert_string_brf_to_brl(brf):
         .replace(b"@", b"`")
         .replace(b"^", b"~")
         .replace(b"\\", b"|")
-        .replace(b"\n", b"\r\n")
     )
 
     return brl
@@ -111,7 +109,7 @@ def get_conversion_function(source_format, output_format):
     elif source_format == "brf" and output_format == "brl":
         converter = convert_string_brf_to_brl
     else:
-        sys.stderr.write("No available converter from " +source_format +" to " +output_format +".\n")
+        sys.stderr.write("No available converter from " + source_format + " to " + output_format + ".\n")
 
     return (converter, source_format, output_format)
 
@@ -136,7 +134,7 @@ def ensure_directory_for(path, verbose=False):
         return
     ensure_directory_for(head)
     if verbose:
-        sys.stderr.write("Creating directory: " +head +"\n")
+        sys.stderr.write("Creating directory: " + head + "\n")
     os.mkdir(head)
 
 
@@ -153,7 +151,7 @@ def convert_directory(directory, pattern, output_pattern, recursive, converter, 
         sys.stderr.write("The search pattern may only contain one asterisk (*) character.\n")
         sys.exit(-1)
     file_pattern = re.compile(
-        "^" +re.escape(pattern).replace("\\*", "(?P<name>.*)") +"$",
+        "^" + re.escape(pattern).replace("\\*", "(?P<name>.*)") + "$",
         re.IGNORECASE
     )
 
@@ -163,7 +161,7 @@ def convert_directory(directory, pattern, output_pattern, recursive, converter, 
             converted_file_name = output_pattern.replace("*", m.group("name"))
             ensure_directory_for(converted_file_name, verbose=verbose)
             if verbose:
-                sys.stderr.write("Converting " +filename +" to " +converted_file_name +"\n")
+                sys.stderr.write("Converting " + filename + " to " + converted_file_name + "\n")
             with open(filename, "rb") as input_file:
                 with open(converted_file_name, "wb") as output_file:
                     convert_file(input_file, output_file, converter)
@@ -221,14 +219,14 @@ def main(argv):
         sys.exit(0)
 
     if "--version" in sys.argv:
-        sys.stderr.write("BRL2BRF version " +VERSION +"\nWritten by Seeing Hands\n")
+        sys.stderr.write("BRL2BRF version " + VERSION + "\nWritten by Seeing Hands\n")
         sys.exit(0)
 
     try:
         config = args.parse_args()
     except argparse.ArgumentError as ae:
         args.print_usage(file=sys.stderr)
-        sys.stderr.write(str(ae) +"\n")
+        sys.stderr.write(str(ae) + "\n")
         sys.stderr.write("For more information, specify --help\n")
         sys.exit(-1)
 
@@ -247,9 +245,9 @@ def main(argv):
         converter, source_format, output_format = get_conversion_function(source_format, output_format)
         output_pattern = config.name_pattern
         if output_pattern is None:
-            output_pattern = "*." +output_format
+            output_pattern = "*." + output_format
         if not os.path.exists(config.directory):
-            sys.stderr.write("Could not open directory: " +config.directory)
+            sys.stderr.write("Could not open directory: " + config.directory)
             sys.exit(-1)
         return convert_directory(
             config.directory,
@@ -278,7 +276,7 @@ def main(argv):
         try:
             input_file = open(config.file, "rb")
         except FileNotFoundError:
-            sys.stderr.write("Could not open file: " +config.file +".\n")
+            sys.stderr.write("Could not open file: " + config.file + ".\n")
             sys.exit(-1)
 
         if source_format is None:
@@ -296,7 +294,7 @@ def main(argv):
         if output_format is None:
             output_format = guess_format_from(config.output)
 
-    converter = get_conversion_function(source_format, output_format)
+    converter, source_format, output_format = get_conversion_function(source_format, output_format)
     convert_file(input_file, output_file, converter)
     if not config.stdin:
         input_file.close()
