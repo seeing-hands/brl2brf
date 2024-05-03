@@ -11,6 +11,11 @@ This version includes many changes for developers. Several user-facing changes a
         * -c/--converter: Used to explicitly add a converter to the operation. This is likely not of use in format conversion but has been introduced for other transformations.
         * -co/--converter-option: Used to set options for a converter. Use the format --converter-option <converter name>.<option name>=<value>.
         * --converter-help <converter>: Used to get information and options for a given converter.
+        * --warnings: Used to set the default behavior for warnings generated during conversion. Options are as follows:
+            * display: print the warning to standard error and continue converting. (default)
+            * ignore: Do not display the warning and continue converting.
+            * error: Treat warnings as errors and exit with return code -2.
+        * --warning: As with the above parameter, but for specific warnings. This can allow you to configure a certain warning differently from the general case.
     * Changes:
         * Since there are more formats, unspecified formats are no longer guessed. If file names or patterns make it possible to guess a format, the program will still do so. If they do not, the format will need to be specified manually.
         * The program is no longer feasible to distribute as a single Python script. It now consists of 8 files. The installation instructions have been updated.
