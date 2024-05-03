@@ -12,106 +12,145 @@ import argparse
 import os
 import sys
 import re
+import converters
 
-VERSION = "1.0.1"
-
-format_choices = ["brf", "brl"]
+VERSION = "1.1.0"
 
 
-def convert_string_brl_to_brf(brl):
+
+def convert_file(inf, outf, converter, warnings="display", warning_table=[]):
     """
-    Convert a BRL-formatted string to BRF.
-
-    Notes:
-        The input file format typically has a .brl extention, but is not known to be standardized.
-        The devices that provide the canonical samples were from Hims.
-        Specifically, the Braille Edge and QBraille XL Braille displays generate these files.
-        This conversion is designed to support formats that do not do all the things that BRL files may have.
-        Even perfectly normal BRF content can be processed by this and produce identical output.
-    """
-    brf = (
-        brl.upper()
-        .replace(b"}", b"]")
-        .replace(b"{", b"[")
-        .replace(b"`", b"@")
-        .replace(b"~", b"^")
-        .replace(b"|", b"\\")
-    )
-
-    return brf
-
-
-def convert_string_brf_to_brl(brf):
-    """
-    Convert a BRF-formatted string to BRL.
-
-    Notes:
-        The input file format typically has a .brf extention.
-        This format is the one expected by HumanWare Braille displays.
-    """
-    brl = (
-        brf.lower()
-        .replace(b"]", b"}")
-        .replace(b"[", b"{")
-        .replace(b"@", b"`")
-        .replace(b"^", b"~")
-        .replace(b"\\", b"|")
-    )
-
-    return brl
-
-
-def convert_file(inf, outf, converter=convert_string_brl_to_brf):
-    """
-    Convert a file using a provided convertion function.
+    Convert a file using a provided converter instance.
 
     Parameters:
         inf: The input file stream, opened for read in binary mode.
         outf: The output file stream, opened for write or append in binary mode.
-        converter: The function that converts strings from one format to another. The default will convert BRL files with a variety of possible codes to BRF as understood by strict libraries.
+        converter: The converter instance that converts strings from one format to another.
     """
+    def handle_warnings(warnings, default_warning_treatment, warning_table):
+        for w in converter.warnings:
+            treatment = default_warning_treatment
+            for warning_source, warning_code, behavior in warning_table:
+                if w[0] == warning_source:
+                    if w[1] == warning_code or w[1] == "*":
+                        treatment = behavior
+                        break
+            if treatment == "ignore":
+                continue
+            else:
+                sys.stderr.write(F"Warning {w[0]}.{w[1]}: {w[2]}\n")
+                if treatment == "error":
+                    sys.stderr.write("Above warning treated as error.\n")
+                    sys.exit(-2)
+
     for line in inf:
-        outf.write(converter(line))
+        outf.write(converter.convert_string(line))
+        handle_warnings(converter.warnings, warnings, warning_table)
+        converter.clear_warnings()
+    outf.write(converter.close())
+    handle_warnings(converter.warnings, warnings, warning_table)
+    converter.clear_warnings()
 
 
-def guess_format_from(filename):
+def guess_format_from(filename, choices=converters.source_formats):
     """
     This just checks the extention case-insensitively for the available formats
     """
 
     extention = filename.lower().split(".")[-1]
-    if extention in format_choices:
+    if extention in choices:
         return extention
     return None
 
 
-def get_conversion_function(source_format, output_format):
+def get_conversion_function(source_format, output_format, explicit_converters=[], generic_options={}, converter_options={}):
     """
     Part of the CLI: not intended to be called in scripts.
     Gets the appropriate conversion function for a set of format choices.
     If the choices are invalid, an error message is printed to stderr and the script exits.
+    For finding a converter chain in scripts, use the function converters.find_converter
     """
-    if source_format is None and output_format is None:
+    if source_format is None or output_format is None:
         sys.stderr.write("Could not identify the conversion you want to perform. Please provide --source-format and/or --output-format\n")
         sys.exit(-1)
-    # Since there are two formats, if we could only get one, we will assume the alternative is used
-    elif source_format is None:
-        source_format = "brf" if output_format == "brl" else "brl"
-    elif output_format is None:
-        output_format = "brf" if source_format == "brl" else "brl"
-    elif source_format == output_format:
+    elif source_format == output_format and len(explicit_converters) == 0:
         sys.stderr.write("Source format and output format appear to be the same. If this is incorrect, please supply --source-format and --output-format\n")
         sys.exit(-1)
 
-    converter = None
-    if source_format == "brl" and output_format == "brf":
-        converter = convert_string_brl_to_brf
-    elif source_format == "brf" and output_format == "brl":
-        converter = convert_string_brf_to_brl
-    else:
-        sys.stderr.write("No available converter from " + source_format + " to " + output_format + ".\n")
+    converter_function = converters.find_converter(source_format, output_format, explicit_converters, generic_options, converter_options)
+    if converter_function is None:
+        sys.stderr.write(f"Could not find a converter from {source_format} to {output_format}")
+    return (converter_function, source_format, output_format)
 
-    return (converter, source_format, output_format)
+
+def validate_converter_option(option_string, converter_options_dict):
+    """
+    Part of the CLI. Splits an option into components, validates that they make sense, and returns a dictionary of the components.
+    On errors, prints an error message and exits.
+    """
+    parts = option_string.split("=", 1)
+    if len(parts) != 2:
+        sys.stderr.write(f"Converter option {option_string}:\nFormat not recognized. Specify converter options as <converter>.<option>=<value>\n")
+        sys.exit(-1)
+    value = parts[1]
+    parts = parts[0].split(".", 1)
+    if len(parts) != 2:
+        sys.stderr.write(f"Converter option {option_string}:\nFormat not recognized. Specify converter options as <converter>.<option>=<value>\n")
+        sys.exit(-1)
+    converter_name = parts[0]
+    option_name = parts[1]
+    if converter_name not in converters.converter_names:
+        sys.stderr.write(f"Converter option {option_string}:\nNo such converter: {converter_name}\n")
+        sys.exit(-1)
+
+    found_option = False
+    valid_value = False
+    for c in converters.converters:
+        if c.name == converter_name:
+            for o in c.options:
+                if o["name"] == option_name:
+                    found_option = True
+                    for c in o["choices"]:
+                        if c["name"] == value:
+                            valid_value = True
+                            break
+                    break
+            break
+
+    if not found_option:
+        sys.stderr.write(f"Converter option {option_string}:\nNo such option for {converter_name}: {option_name}\nTry using `--converter-help {converter_name}` for more information")
+        sys.exit(-1)
+    if not valid_value:
+        sys.stderr.write(f"Converter option {option_string}:\nInvalid value for {converter_name}.{option_name}: {value}\nTry using `--converter-help {converter_name}` for more information")
+        sys.exit(-1)
+    if converter_name in converter_options_dict.keys():
+        converter_options_dict[converter_name][option_name] = value
+    else:
+        converter_options_dict[converter_name] = {option_name: value}
+
+
+def make_warning_table(user_warning_params):
+    r = []
+    for param_string in user_warning_params:
+        parts = param_string.split("=", 1)
+        if len(parts) != 2:
+            sys.stderr.write(f"Warning {param_string}:\nFormat not recognized. Specify warning handlers as <converter>.<warning code>={ignore,display,error}\n")
+            sys.exit(-1)
+        treatment = parts[1]
+        parts = parts[0].split(".", 1)
+        if len(parts) != 2:
+            sys.stderr.write(f"Warning {param_string}:\nFormat not recognized. Specify warning handlers as <converter>.<warning code>={ignore,display,error}\n")
+            sys.exit(-1)
+        converter_name = parts[0]
+        warning_code = parts[1]
+        if converter_name not in converters.converter_names:
+            sys.stderr.write(f"Warning handler {param_string}:\nNo such converter: {converter_name}\n")
+            sys.exit(-1)
+        if treatment not in ["ignore", "display", "error"]:
+            sys.stderr.write(f"Warning handler {param_string}:\nInvalid treatment: {treatment}\n")
+            sys.exit(-1)
+        r.append((converter_name, warning_code, treatment))
+    return r
 
 
 def list_files(basedir=".", recursive=True):
@@ -138,7 +177,7 @@ def ensure_directory_for(path, verbose=False):
     os.mkdir(head)
 
 
-def convert_directory(directory, pattern, output_pattern, recursive, converter, verbose=False):
+def convert_directory(directory, pattern, output_pattern, recursive, converter, default_warning_treatment, warning_table, verbose=False):
     """
     Part of the CLI. Not intended for inclusion in scripts.
     Convert a directory of files.
@@ -164,7 +203,7 @@ def convert_directory(directory, pattern, output_pattern, recursive, converter, 
                 sys.stderr.write("Converting " + filename + " to " + converted_file_name + "\n")
             with open(filename, "rb") as input_file:
                 with open(converted_file_name, "wb") as output_file:
-                    convert_file(input_file, output_file, converter)
+                    convert_file(input_file, output_file, converter(), default_warning_treatment, warning_table)
 
 
 def main(argv):
@@ -181,7 +220,9 @@ def main(argv):
     args.add_argument("-v", "--verbose",
         help="Print progress messages to standard error", action="store_true")
 
-    input_args = args.add_mutually_exclusive_group(required=True)
+    # Input args are not required because having a required group will block special options like --converter-help
+    # For normal usage, exactly one is required and this will be checked
+    input_args = args.add_mutually_exclusive_group()
     input_args.add_argument("-i", "--stdin",
         help="Read input file from standard input", action="store_true")
     input_args.add_argument("-f", "--file",
@@ -209,10 +250,26 @@ def main(argv):
 
     args.add_argument("-sf", "--source-format",
         help="Specify the format of the source file. If not provided, it will be assumed from file names", action="store",
-        choices=format_choices)
+        choices=converters.source_formats)
     args.add_argument("-of", "--output-format",
         help="Specify the format of the output file. If not provided, it will be assumed from file names", action="store",
-        choices=format_choices)
+        choices=converters.output_formats)
+
+    args.add_argument("-c", "--converter", action="append",
+        help="Specify a converter to use. Format converters can usually be assigned automatically.",
+        choices=converters.converter_names, default=[])
+    args.add_argument("-co", "--converter-option", action="append", default=[],
+        help="Specify an option of a converter. For a list, use the --converter-help argument.")
+    args.add_argument("--converter-help",
+        help="Get information about a converter and its options.",
+        choices=converters.converter_names)
+
+    args.add_argument("--warnings",
+        help="Set default handling for converter warnings",
+        choices=["display", "ignore", "error"], default="display")
+    args.add_argument("--warning", action="append",
+        help="Set handling for specific converter warnings. Use the format <converter_name>.<warning_name>={display,ignore,error}",
+        default=[])
 
     if "--help" in sys.argv:
         args.print_help(file=sys.stderr)
@@ -230,6 +287,20 @@ def main(argv):
         sys.stderr.write("For more information, specify --help\n")
         sys.exit(-1)
 
+    # Set up converters requested on the command line
+    # Print converter help if requested
+    if config.converter_help is not None:
+        for c in converters.converters:
+            if c.name == config.converter_help:
+                sys.stderr.write(c.usage())
+                sys.exit(0)
+
+    converter_options = {}
+    for converter_option in config.converter_option:
+        validate_converter_option(converter_option, converter_options)
+
+    warning_table = make_warning_table(config.warning)
+
     converter = None
 
     if config.directory is not None:
@@ -238,11 +309,11 @@ def main(argv):
             sys.exit(-1)
         source_format = config.source_format
         if source_format is None:
-            source_format = guess_format_from(config.pattern)
+            source_format = guess_format_from(config.pattern, choices=converters.source_formats)
         output_format = config.output_format
         if output_format is None and config.name_pattern is not None:
-            output_format = guess_format_from(config.name_pattern)
-        converter, source_format, output_format = get_conversion_function(source_format, output_format)
+            output_format = guess_format_from(config.name_pattern, choices=converters.output_formats)
+        converter, source_format, output_format = get_conversion_function(source_format, output_format, config.converter, {}, converter_options)
         output_pattern = config.name_pattern
         if output_pattern is None:
             output_pattern = "*." + output_format
@@ -255,10 +326,18 @@ def main(argv):
             output_pattern,
             config.recursive,
             converter,
+            config.warnings,
+            warning_table,
             config.verbose
         )
 
     # Not set to directory mode, convert a single file
+    # Check that we have input arguments that we need
+    if not config.stdin and config.file is None:
+        args.print_usage(file=sys.stderr)
+        sys.stderr.write("Error: Exactly one of the --stdin, --file, or --directory options are required.\n")
+        sys.exit(-1)
+
     input_file = None
     output_file = None
     source_format = config.source_format
@@ -280,7 +359,7 @@ def main(argv):
             sys.exit(-1)
 
         if source_format is None:
-            source_format = guess_format_from(config.file)
+            source_format = guess_format_from(config.file, choices=converters.source_formats)
 
     if config.stdout:
         output_file = sys.stdout.buffer
@@ -292,10 +371,10 @@ def main(argv):
             sys.exit(-1)
 
         if output_format is None:
-            output_format = guess_format_from(config.output)
+            output_format = guess_format_from(config.output, choices=converters.output_formats)
 
-    converter, source_format, output_format = get_conversion_function(source_format, output_format)
-    convert_file(input_file, output_file, converter)
+    converter, source_format, output_format = get_conversion_function(source_format, output_format, config.converter, {}, converter_options)
+    convert_file(input_file, output_file, converter(), config.warnings, warning_table)
     if not config.stdin:
         input_file.close()
 
