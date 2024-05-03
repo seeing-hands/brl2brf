@@ -106,7 +106,6 @@ def find_converter(source_format, output_format, explicit_converters=[], generic
                 shortest_length = len(chain)
     if len(shortest) == 0:
         return None
-    print(f"Converting {source_format} to {output_format} using converter chain as follows: {shortest}")
     return chain_converters(shortest, generic_options, converter_options)
 
 
