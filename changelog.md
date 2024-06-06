@@ -1,5 +1,9 @@
 # BRL2BRF Release History
 For more information, see the readme.md file or the project page at [https://github.com/seeing-hands/brl2brf]
+## Version 1.1.1
+* Bug fixes
+    * Fixed a bug related to 8-dot characters when converting Unicode to BRF
+
 ## Version 1.1.0
 This version includes many changes for developers. Several user-facing changes are noticeable as well, though existing workflows are unlikely to need changes with one exception.
 * Additions
