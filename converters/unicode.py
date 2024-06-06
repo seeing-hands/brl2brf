@@ -185,6 +185,10 @@ class unicode_to_brf (UnicodeConverter):
         }
     ]
 
+    def __init__(self, generic_options=[], converter_options=[]):
+        UnicodeConverter.__init__(self, generic_options, converter_options)
+        self.eight_dot_behavior = converter_options.get("eight_dot_characters", "warn")
+
     def convert(self, unicode):
         """
         Convert a unicode-formatted string to BRF.
@@ -206,7 +210,7 @@ class unicode_to_brf (UnicodeConverter):
                 elif self.eight_dot_behavior == "delete":
                     continue
                 elif self.eight_dot_behavior == "strip":
-                    brf += brf_table_chars[(c - 0x2800) % len(brf_table_chars)]
+                    brf += brf_table_chars[(cn - 0x2800) % len(brf_table_chars)]
                 elif self.eight_dot_behavior == "bypass":
                     brf += c
             else:
