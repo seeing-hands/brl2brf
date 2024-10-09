@@ -9,6 +9,7 @@ from . import brl
 from . import kwb
 from . import unicode
 from . import helptech
+from . import bra
 
 converters = [
     brl.brl_to_brf,
@@ -18,6 +19,8 @@ converters = [
     unicode.brf_to_unicode,
     helptech.helptech_to_unicode,
     helptech.unicode_to_helptech,
+    bra.bra_to_unicode,
+    bra.unicode_to_bra
 ]
 
 source_formats = sorted(list(set(
