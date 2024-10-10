@@ -37,7 +37,7 @@ class unicode_to_brf (UnicodeConverter):
         }
     ]
 
-    def __init__(self, generic_options=[], converter_options=[]):
+    def __init__(self, generic_options={}, converter_options={}):
         UnicodeConverter.__init__(self, generic_options, converter_options)
         self.eight_dot_behavior = converter_options.get("eight_dot_characters", "warn")
 
