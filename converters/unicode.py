@@ -99,7 +99,7 @@ class UnicodeConverter(converter):
                     if ude.start > 0:
                         truncated_data = all_data[0:ude.start]
                         try:
-                            truncated_unicode_data = self.unicode_decode(truncated_data)
+                            truncated_unicode_data = truncated_data.decode(encoding=self.input_encoding)
                             self.input_buffer = all_data[ude.start:]
                             return truncated_unicode_data
                         except UnicodeDecodeError as ude_second:
