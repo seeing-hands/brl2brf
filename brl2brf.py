@@ -110,10 +110,20 @@ def validate_converter_option(option_string, converter_options_dict):
             for o in c.options:
                 if o["name"] == option_name:
                     found_option = True
-                    for c in o["choices"]:
-                        if c["name"] == value:
+                    option_type = o.get("type", "choice")
+                    if option_type == "choice":
+                        for c in o["choices"]:
+                            if c["name"] == value:
+                                valid_value = True
+                                break
+                    if option_type == "int":
+                        try:
+                            value = int(value)
                             valid_value = True
-                            break
+                        except ValueError:
+                            valid_value = False
+                    if option_type == "str":
+                        valid_value = True
                     break
             break
 
@@ -295,6 +305,8 @@ def main(argv):
                 sys.stderr.write(c.usage())
                 sys.exit(0)
 
+    generic_options = {}
+
     converter_options = {}
     for converter_option in config.converter_option:
         validate_converter_option(converter_option, converter_options)
@@ -313,7 +325,7 @@ def main(argv):
         output_format = config.output_format
         if output_format is None and config.name_pattern is not None:
             output_format = guess_format_from(config.name_pattern, choices=converters.output_formats)
-        converter, source_format, output_format = get_conversion_function(source_format, output_format, config.converter, {}, converter_options)
+        converter, source_format, output_format = get_conversion_function(source_format, output_format, config.converter, generic_options, converter_options)
         output_pattern = config.name_pattern
         if output_pattern is None:
             output_pattern = "*." + output_format
@@ -373,7 +385,7 @@ def main(argv):
         if output_format is None:
             output_format = guess_format_from(config.output, choices=converters.output_formats)
 
-    converter, source_format, output_format = get_conversion_function(source_format, output_format, config.converter, {}, converter_options)
+    converter, source_format, output_format = get_conversion_function(source_format, output_format, config.converter, generic_options, converter_options)
     convert_file(input_file, output_file, converter(), config.warnings, warning_table)
     if not config.stdin:
         input_file.close()
