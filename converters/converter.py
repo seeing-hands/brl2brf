@@ -83,8 +83,21 @@ class converter:
             for o in cls.options:
                 requirement = "required" if o.get("required", False) else "optional"
                 r += f"  {o['name']}: {o['description']} ({requirement}):\n"
-                for c in o["choices"]:
-                    r += f"    {c['name']}: {c.get('description', '')}\n"
+                otype = o.get("type", "choice")
+                if otype == "choice":
+                    for c in o["choices"]:
+                        r += f"    {c['name']}: {c.get('description', '')}\n"
+                if otype == "int":
+                    r += "    Type: integer\n"
+                    for k in ["minimum", "maximum", "default"]:
+                        if k in o.keys():
+                            r += f"    {k.title()}: {o[k]}"
+                if otype == "str":
+                    r += "    Type: string\n"
+                    for k in ["default"]:
+                        if k in o.keys():
+                            r += f"    {k.title()}: {o[k]}"
+
         return r
 
     def warning(self, warning_code, warning_description=""):
@@ -121,18 +134,24 @@ class converter_chain(converter):
             s = c.convert_string(s)
             if s is None:
                 s = b""
-            for warning_source, warning_code, warning_desc in c.warnings:
-                self.warning(warning_code, warning_desc, warning_source)
+            self.collect_warnings(c)
         return s
 
     def close(self):
-        r = b""
-        for c in self.converters:
-            r = c.close()
-            for warning_source, warning_code, warning_desc in c.warnings:
-                self.warning(warning_code, warning_desc, warning_source)
-        return r
+        rs = []
+        for ci in range(len(self.converters)):
+            s = self.converters[ci].close()
+            self.collect_warnings(self.converters[ci])
+            for c in self.converters[ci + 1:]:
+                s = c.convert_string(s)
+                self.collect_warnings(c)
+            rs.append(s)
+        return b"".join(rs)
 
     def warning(self, warning_code, warning_desc, warning_source):
         # Pass through the original source. Don't identify the chain as the source.
         self.warnings.append((warning_source, warning_code, warning_desc))
+
+    def collect_warnings(self, c):
+        for warning_source, warning_code, warning_desc in c.warnings:
+            self.warning(warning_code, warning_desc, warning_source)

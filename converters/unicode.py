@@ -67,12 +67,41 @@ class UnicodeConverter(converter):
         }
     ]
 
+    # Specifically for use by converters that both input and output Unicode data
+    # Warning, the match option is not available if data other than Unicode data is the input format
+    bidirectional_output_options = [
+        {
+            "name": "output_encoding",
+            "description": "The Unicode encoding to use in created files.",
+            "choices": [
+                {
+                    "name": "match",
+                    "description": "Matches the version used in the input file",
+                    "default": True
+                },
+                {
+                    "name": "UTF-8",
+                    "default": False
+                },
+                {
+                    "name": "UTF-16",
+                    "default": False
+                },
+                {
+                    "name": "UTF-32",
+                    "default": False
+                }
+            ]
+        }
+    ]
+
     def __init__(self, generic_options={}, converter_options={}):
         converter.__init__(self, generic_options=generic_options, converter_options=converter_options)
         input_encoding = converter_options.get("input_encoding", "auto")
         self.auto_encoding = (input_encoding == "auto")
         self.input_encoding = input_encoding if input_encoding != "auto" else None
         self.output_encoding = converter_options.get("output_encoding", "UTF-8")
+        self.output_buffer = ""  # Only used for bidirectional converters
 
     def close(self):
         """
@@ -149,6 +178,18 @@ class UnicodeConverter(converter):
             raise ConverterError("Could not find a valid encoding")
         else:
             return max(candidates, key=(lambda x: content_prediction_function(x[1])))[0]
+
+    def unicode_encode(self, cs):
+        if self.output_buffer != "":
+            cs = self.output_buffer + cs
+            self.output_buffer = ""
+        if self.output_encoding == "match":
+            if self.input_encoding != "auto":
+                return cs.encode(self.input_encoding)
+            else:
+                self.output_buffer = cs
+        else:
+            return cs.encode(self.output_encoding)
 
 
 # Generic converter for 8-dot single-byte Braille formats
