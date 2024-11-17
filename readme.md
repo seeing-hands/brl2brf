@@ -4,7 +4,7 @@
 This script can convert files among multiple formats (5 currently supported) which have been used to store raw Braille data. These formats are usually generated or read by devices or software that handle Braille documents, but a lack of standardization through history means that one program might generate a file that another one can't read. This tool is an attempt to bridge the gap and allow people to use a Braille file anywhere, no matter where it came from.
 
 ## What isn't it?
-This is not a complex Braille converter. It cannot, for example, convert plain text to contracted Braille, nor even reflow a Braille file to different line lengths. This was only designed to perform a quick conversion from one raw file type to another. For more complex Braille conversion needs, we suggest that you use a program like [BrailleBlaster](https://brailleblaster.org/).
+This is not a complex Braille converter. It cannot, for example, convert plain text to contracted Braille. This was only designed to perform a quick conversion from one raw file type to another. For more complex Braille conversion needs, we suggest that you use a program like [BrailleBlaster](https://brailleblaster.org/).
 
 ## Why is this useful
 There are some devices which understand only one Braille format. This is true of some Braille displays that have a specific internal format and may also be true of any system whose software for handling Braille data has been written to only accept one encoding. If you give the wrong format to a system like this, it will likely ignore, replace, or crash on some characters.
