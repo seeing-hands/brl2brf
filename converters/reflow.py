@@ -50,12 +50,12 @@ class reflow (UnicodeConverter):
                     },
                     {
                         "name": "double",
-                        "description": "Two or more line breaks are retained, whereas single line breaks are removed for reflowing",
+                        "description": "Two or more line breaks are retained, whereas single line breaks are replaced by spaces for reflowing.",
                         "default": True
                     },
                     {
                         "name": "remove",
-                        "description": "All line breaks are removed entirely",
+                        "description": "All line breaks are replaced by spaces.",
                     }
                 ]
             }
@@ -71,6 +71,7 @@ class reflow (UnicodeConverter):
         self.linebreaks = converter_options.get("linebreaks", "double")
         self.split_str = converter_options.get("split_character", "\u2824")
         self.linebreak_str = "\r\n"
+        self.space_char = " "
         self.text_buffer = ""
 
     def close(self):
@@ -79,13 +80,13 @@ class reflow (UnicodeConverter):
     def convert(self, data, closing=False):
         self.text_buffer += self.unicode_decode(data)
         if self.linebreaks == "remove":
-            self.text_buffer = self.text_buffer.replace("\r\n", "").replace("\n", "")
+            self.text_buffer = self.text_buffer.replace("\r\n", self.space_char).replace("\n", self.space_char)
         if self.linebreaks == "double":
             i = len(self.text_buffer)-1
             while i > 0 and self.text_buffer[i] in "\r\n":
                 i -= 1
             suffix = self.text_buffer[i:]
-            self.text_buffer = re.sub("([^\n\r])(\r?\n)([^\n\r])", "\\1\\3", self.text_buffer[0:i]) + suffix
+            self.text_buffer = re.sub("([^\n\r])(\r?\n)([^\n\r])", f"\\1{self.space_char}\\3", self.text_buffer[0:i]) + suffix
         lines = []
         while len(self.text_buffer) > self.line_length:
             nli = -1
