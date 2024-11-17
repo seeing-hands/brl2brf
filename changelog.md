@@ -1,5 +1,18 @@
 # BRL2BRF Release History
 For more information, see the readme.md file or the project page at [https://github.com/seeing-hands/brl2brf]
+
+## Version 1.2.0
+* Additions
+    * New formats supported
+        * BRA and BAN eight-dot Braille formats
+        * LDF (Levelstar Document Format) files
+        * PEF (Portable Embosser Format) files (decoding only)
+    * New features
+        * Reflowing files to different line lengths is now supported. For more information, see the file doc/reflow.md
+* Changes
+    * Converter options may be numbers or strings, not always a set of options. These will be noted in the --converter-help output.
+
+
 ## Version 1.1.1
 * Bug fixes
     * Fixed a bug related to 8-dot characters when converting Unicode to BRF
