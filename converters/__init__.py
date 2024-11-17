@@ -7,20 +7,29 @@ from .converter import converter, ConverterError, converter_chain
 # Add any new converters to this list
 from . import brl
 from . import kwb
-from . import unicode
 from . import helptech
-from . import bra
+from . import braban
+from . import ldf
+from . import pef
+from . import brf
+from . import reflow
 
 converters = [
     brl.brl_to_brf,
     brl.brf_to_brl,
     kwb.kwb_to_brf,
-    unicode.unicode_to_brf,
-    unicode.brf_to_unicode,
+    brf.unicode_to_brf,
+    brf.brf_to_unicode,
     helptech.helptech_to_unicode,
     helptech.unicode_to_helptech,
-    bra.bra_to_unicode,
-    bra.unicode_to_bra
+    braban.bra_to_unicode,
+    braban.unicode_to_bra,
+    braban.ban_to_unicode,
+    braban.unicode_to_ban,
+    ldf.ldf_to_brf,
+    ldf.brf_to_ldf,
+    pef.pef_to_unicode,
+    reflow.reflow
 ]
 
 source_formats = sorted(list(set(
@@ -101,7 +110,7 @@ def find_converter(source_format, output_format, explicit_converters=[], generic
         if len(chain) < shortest_length:
             valid_chain = True
             for ec in explicit_converters:
-                if ec["name"] not in chain:
+                if ec not in chain:
                     valid_chain = False
                     break
             if valid_chain:
