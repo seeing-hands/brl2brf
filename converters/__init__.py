@@ -12,6 +12,7 @@ from . import braban
 from . import ldf
 from . import pef
 from . import brf
+from . import gf
 from . import reflow
 
 converters = [
@@ -29,6 +30,8 @@ converters = [
     ldf.ldf_to_brf,
     ldf.brf_to_ldf,
     pef.pef_to_unicode,
+    gf.gf_to_brf,
+    gf.brf_to_gf,
     reflow.reflow
 ]
 

@@ -1,5 +1,6 @@
 # BRL2BRF: Convert between raw Braille file formats
 
+Would you like a version of this software with a more user-friendly interface? [Tell us about your interest.](https://s.seeinghands.org/brl2brfsurvey)
 ## What is it?
 This script can convert files among multiple formats (5 currently supported) which have been used to store raw Braille data. These formats are usually generated or read by devices or software that handle Braille documents, but a lack of standardization through history means that one program might generate a file that another one can't read. This tool is an attempt to bridge the gap and allow people to use a Braille file anywhere, no matter where it came from.
 
@@ -71,4 +72,4 @@ Having seen proprietary Braille systems, I know this will eventually happen and 
 This script is licensed under the MIT license. This license should basically let you do as you wish with the software, but if you would like to do something under different terms, contact [Seeing Hands](https://www.seeinghands.org).
 
 ## Contacting the author
-If you have a GitHub account, I encourage you to open an issue for any problems you encounter. If you don't have an account and don't want to make one, you can use the contact form on the [Seeing Hands website](https://www.seeinghands.org).
+If you have a GitHub account, I encourage you to open an issue for any problems you encounter. If you don't have an account and don't want to make one, you can use the contact form on the [Seeing Hands website](https://www.seeinghands.org). We also have a [user survey](https://s.seeinghands.org/brl2brfsurvey) where you can let us know about any features or formats you would like to see in this software.
