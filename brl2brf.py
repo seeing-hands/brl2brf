@@ -4,7 +4,7 @@ BRL2BRF: Convert between raw Braille file formats
 
 This script was written by Seeing Hands (seeinghands.org).
 
-Copyright (c) 2022-2024 Seeing Hands
+Copyright (c) 2022-2025 Seeing Hands
 Licensed under the MIT license. See the "license" file for details.
 """
 
@@ -14,8 +14,7 @@ import sys
 import re
 import converters
 
-VERSION = "1.1.0"
-
+VERSION = "1.2.1"
 
 
 def convert_file(inf, outf, converter, warnings="display", warning_table=[]):
