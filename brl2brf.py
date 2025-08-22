@@ -14,7 +14,7 @@ import sys
 import re
 import converters
 
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 
 
 def convert_file(inf, outf, converter, warnings="display", warning_table=[]):

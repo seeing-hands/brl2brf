@@ -13,6 +13,7 @@ from . import ldf
 from . import pef
 from . import brf
 from . import gf
+from . import fnz
 from . import reflow
 
 converters = [
@@ -32,6 +33,8 @@ converters = [
     pef.pef_to_unicode,
     gf.gf_to_brf,
     gf.brf_to_gf,
+    fnz.fnz_to_unicode,
+    fnz.unicode_to_fnz,
     reflow.reflow
 ]
 
