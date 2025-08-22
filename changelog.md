@@ -1,6 +1,11 @@
 # BRL2BRF Release History
 For more information, see the readme.md file or the project page at [https://github.com/seeing-hands/brl2brf]
 
+## Version 1.2.2
+* Additions
+    * New formats supported
+        * FNZ, a file type produced by the Focus displays' Scratchpad application
+
 ## Version 1.2.1
 * Additions
     * New formats supported
