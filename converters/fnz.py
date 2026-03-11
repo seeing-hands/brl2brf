@@ -104,5 +104,4 @@ class fnz_to_unicode (UnicodeConverter):
                 r += chr(0x2800 + n)
             if line.endswith(b"\n"):
                 r += "\n"
-                print("Adding a newline")
         return r.encode(self.output_encoding)
