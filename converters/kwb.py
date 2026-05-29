@@ -115,5 +115,6 @@ class kwb_to_brf (converter):
     def close(self):
         self.closed = True
         if self.input_buffer != b"":
-            return self.convert(self.input_buffer)
+            return self.convert_section(self.input_buffer)
+            self.input_buffer = b""
         return b""
