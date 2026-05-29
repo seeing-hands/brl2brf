@@ -1,6 +1,12 @@
 # BRL2BRF Release History
 For more information, see the readme.md file or the project page at [https://github.com/seeing-hands/brl2brf]
 
+## Version 1.2.3
+* Bug fixes
+    * Fixed a bug that could report a warning and possibly trim the last chunk of a KWB file
+    * Removed some useless console printing
+    * Updated documentation so it describes current feature availability rather than two years ago's features
+
 ## Version 1.2.2
 * Additions
     * New formats supported
