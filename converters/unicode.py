@@ -229,7 +229,6 @@ class generic8dot_to_unicode (UnicodeConverter):
                     unicode += chr(c)
                 elif c in self.table_bytes:
                     unicode += chr(0x2800 + self.table_bytes.index(c))
-                    print(f"Finding character {c}: {self.table_bytes.index(c)}")
                 else:
                     self.warning("unexpected_character", f"The character {c} is not expected in this file.")
                     unicode += chr(c)
