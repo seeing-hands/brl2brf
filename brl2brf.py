@@ -140,15 +140,16 @@ def validate_converter_option(option_string, converter_options_dict):
 
 def make_warning_table(user_warning_params):
     r = []
+    param_string_help = "Format not recognized. Specify warning handlers as <converter>.<warning code>={ignore,display,error}"
     for param_string in user_warning_params:
         parts = param_string.split("=", 1)
         if len(parts) != 2:
-            sys.stderr.write(f"Warning {param_string}:\nFormat not recognized. Specify warning handlers as <converter>.<warning code>={ignore,display,error}\n")
+            sys.stderr.write(f"Warning {param_string}:\n{param_string_help}\n")
             sys.exit(-1)
         treatment = parts[1]
         parts = parts[0].split(".", 1)
         if len(parts) != 2:
-            sys.stderr.write(f"Warning {param_string}:\nFormat not recognized. Specify warning handlers as <converter>.<warning code>={ignore,display,error}\n")
+            sys.stderr.write(f"Warning {param_string}:\n{param_string_help}\n")
             sys.exit(-1)
         converter_name = parts[0]
         warning_code = parts[1]
@@ -162,8 +163,10 @@ def make_warning_table(user_warning_params):
     return r
 
 
-def list_files(basedir=".", recursive=True):
+def list_files(basedir=".", recursive=True, exclude_hidden=False):
     for fn in os.listdir(basedir):
+        if exclude_hidden and fn.startswith("."):
+            continue
         ffn = os.path.join(basedir, fn)
         if os.path.isfile(ffn):
             yield ffn
@@ -186,7 +189,7 @@ def ensure_directory_for(path, verbose=False):
     os.mkdir(head)
 
 
-def convert_directory(directory, pattern, output_pattern, recursive, converter, default_warning_treatment, warning_table, verbose=False):
+def convert_directory(directory, pattern, output_pattern, recursive, converter, default_warning_treatment, warning_table, verbose=False, all_files=False):
     """
     Part of the CLI. Not intended for inclusion in scripts.
     Convert a directory of files.
@@ -203,8 +206,8 @@ def convert_directory(directory, pattern, output_pattern, recursive, converter, 
         re.IGNORECASE
     )
 
-    for filename in list_files(directory, recursive):
-        m = file_pattern.match(filename[len(directory):])
+    for filename in list_files(directory, recursive, exclude_hidden=not all_files):
+        m = file_pattern.match(filename[len(directory)+1:])
         if m:
             converted_file_name = output_pattern.replace("*", m.group("name"))
             ensure_directory_for(converted_file_name, verbose=verbose)
@@ -256,6 +259,8 @@ def main(argv):
         action="store")
     directory_args.add_argument("-r", "--recursive",
         help="Process subdirectories recursively", action="store_true")
+    directory_args.add_argument("-a", "--all-files",
+        help="Process files that start with . characters, including hidden files", action="store_true")
 
     args.add_argument("-sf", "--source-format",
         help="Specify the format of the source file. If not provided, it will be assumed from file names", action="store",
@@ -339,7 +344,8 @@ def main(argv):
             converter,
             config.warnings,
             warning_table,
-            config.verbose
+            config.verbose,
+            config.all_files
         )
 
     # Not set to directory mode, convert a single file
