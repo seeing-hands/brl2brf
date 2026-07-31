@@ -1,6 +1,14 @@
 # BRL2BRF Release History
 For more information, see the readme.md file or the project page at [https://github.com/seeing-hands/brl2brf]
 
+## Version 1.3.0
+* Changes
+    * Added a flag, -a, which controls whether hidden files are translated when working in directory mode
+        * This parameter defaults to false, excluding hidden files. This is desirable when running on Mac OS, especially at the root of a volume
+        * This changes the default behavior from including hidden files to excluding them. Add the -a flag to return to including them.
+* Bug fixes
+    * Fixed a bug in directory mode searching where a path separator character was included in the new pattern
+
 ## Version 1.2.3
 * Bug fixes
     * Fixed a bug that could report a warning and possibly trim the last chunk of a KWB file
